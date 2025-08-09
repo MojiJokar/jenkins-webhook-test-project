@@ -1,9 +1,18 @@
 pipeline {
-     stages {
-        stage('Greeting') {
+    agent any
+    stages {
+        stage('Check Environment') {
             steps {
-                echo 'hello Datascientest'
+                echo "Jenkins pipeline is running."
+                sh 'whoami'
+                sh 'env'
+            }
+        }
+        stage('List Workspace') {
+            steps {
+                sh 'ls -la'
             }
         }
     }
 }
+
