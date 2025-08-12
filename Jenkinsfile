@@ -50,39 +50,39 @@ pipeline {
         }
         */
 
-        stage('Docker Run') { 
-            steps { 
-                script { 
+        stage('Docker Run') {
+            steps {
+                script {
                     sh '''
                         docker run -d -p 80:80 --name jenkins \
                             $DOCKER_ID/$DOCKER_IMAGE:$DOCKER_TAG
                         sleep 10
                     '''
-                } 
-            } 
+                }
+            }
         }
 
-        stage('Test Acceptance') { 
-            steps { 
-                script { 
-                    sh 'curl localhost' 
-                } 
-            } 
-        } 
+        stage('Test Acceptance') {
+            steps {
+                script {
+                    sh 'curl localhost'
+                }
+            }
+        }
 
-        stage('Docker Push') { 
-            environment { 
-                DOCKER_PASS = credentials("DOCKER_HUB_PASS") 
-            } 
-            steps { 
-                script { 
+        stage('Docker Push') {
+            environment {
+                DOCKER_PASS = credentials("DOCKER_HUB_PASS")
+            }
+            steps {
+                script {
                     sh '''
                         docker login -u $DOCKER_ID -p $DOCKER_PASS
                         docker push $DOCKER_ID/$DOCKER_IMAGE:$DOCKER_TAG
-                    ''' 
-                } 
-            } 
-        } 
+                    '''
+                }
+            }
+        }
 
         stage('Debug Kubeconfig') {
             steps {
@@ -101,5 +101,33 @@ pipeline {
             }
         }
 
+        stage('Deploy to Dev') {
+            environment {
+                KUBECONFIG = credentials("config")  // Jenkins credential with kubeconfig file
+            }
+            steps {
+                script {
+                    sh '''
+                        # Clean and recreate kube config directory
+                        rm -rf ~/.kube && mkdir -p ~/.kube
+
+                        # Write the kubeconfig contents to default location
+                        cat $KUBECONFIG > ~/.kube/config
+
+                        # Copy Helm values.yaml for modification
+                        cp fastapi/values.yaml values.yml
+
+                        # Substitute the image tag in values.yml with current DOCKER_TAG
+                        sed -i "s+tag.*+tag: ${DOCKER_TAG}+g" values.yml
+
+                        # Create the 'dev' namespace if it doesn't exist (idempotent)
+                        kubectl create namespace dev --dry-run=client -o yaml | kubectl apply -f -
+
+                        # Deploy or upgrade Helm chart 'app' in namespace 'dev' with updated values
+                        helm upgrade --install app fastapi --values=values.yml --namespace dev
+                    '''
+                }
+            }
+        }
     }
 }
