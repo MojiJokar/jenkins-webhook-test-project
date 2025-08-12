@@ -111,8 +111,10 @@ pipeline {
                               rm -Rf .kube && mkdir .kube 
                             cat $KUBECONFIG > .kube/config 
                             cp charts/values.yaml values.yml 
-                            sed -i "s+tag.*+tag: ${DOCKER_TAG}+g" values.yml 
+                            # sed -i "s+tag.*+tag: ${DOCKER_TAG}+g" values.yml 
                             # kubectl create namespace dev --dry-run=client -o yaml | kubectl  apply -f 
+                            sed -i 's|127.0.0.1|172.30.189.142|g' $KUBECONFIG
+
                             helm upgrade --install cast-service charts --values=values.yml --namespace dev 
  
                     '''
