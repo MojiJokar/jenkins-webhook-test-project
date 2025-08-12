@@ -1,21 +1,82 @@
-pipeline { 
-  environment { 
-    DOCKER_ID = "maxjokar2020" // Your Docker Hub ID 
-    DOCKER_IMAGE = "datascientestapi" 
-    DOCKER_TAG = "v.${BUILD_ID}.0" 
-  } 
+// A simple Jenkins pipeline example
+// pipeline { 
+//   environment { 
+//     DOCKER_ID = "maxjokar2020" // Your Docker Hub ID 
+//     DOCKER_IMAGE = "datascientestapi" 
+//     DOCKER_TAG = "v.${BUILD_ID}.0" 
+//   } 
+//     agent any
+//     stages {
+//         stage('Check Environment') {
+//             steps {
+//                 echo "Jenkins pipeline is running."
+//                 sh 'whoami'
+//                 sh 'env'
+//             }
+//         }
+//         stage('List Workspace') {
+//             steps {
+//                 sh 'ls -la'
+//             }
+//         }
+//     }
+// }
+
+//2. another example of a Jenkins pipeline
+
+pipeline {
+    environment {
+        DOCKER_ID    = "maxjokar2020"           // Your Docker Hub ID
+        DOCKER_IMAGE = "datascientestapi"
+        DOCKER_TAG   = "v.${BUILD_ID}.0"
+    }
+
     agent any
+
     stages {
-        stage('Check Environment') {
+        stage('Docker Build') {
             steps {
-                echo "Jenkins pipeline is running."
-                sh 'whoami'
-                sh 'env'
+                script {
+                    sh '''
+                        docker rm -f jenkins || true
+                        docker build -t $DOCKER_ID/$DOCKER_IMAGE:$DOCKER_TAG .
+                        sleep 6
+                    '''
+                }
             }
         }
-        stage('List Workspace') {
+
+        stage('Docker Run') {
             steps {
-                sh 'ls -la'
+                script {
+                    sh """
+                        docker run -d -p 80:80 --name jenkins \\
+                        $DOCKER_ID/$DOCKER_IMAGE:$DOCKER_TAG
+                        sleep 10
+                    """
+                }
+            }
+        }
+
+        stage('Test Acceptance') {
+            steps {
+                script {
+                    sh 'curl localhost'
+                }
+            }
+        }
+
+        stage('Docker Push') {
+            environment {
+                DOCKER_PASS = credentials("DOCKER_HUB_PASS")
+            }
+            steps {
+                script {
+                    sh '''
+                        docker login -u $DOCKER_ID -p $DOCKER_PASS
+                        docker push $DOCKER_ID/$DOCKER_IMAGE:$DOCKER_TAG
+                    '''
+                }
             }
         }
     }
