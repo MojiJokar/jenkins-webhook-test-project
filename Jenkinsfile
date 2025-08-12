@@ -1,12 +1,16 @@
 // A simple Jenkins pipeline example
-pipeline { 
-  environment { 
-    DOCKER_ID = "maxjokar2020" // Your Docker Hub ID 
-    DOCKER_IMAGE = "datascientestapi" 
-    DOCKER_TAG = "v.${BUILD_ID}.0" 
-  } 
+// A simple Jenkins pipeline example
+pipeline {
+    environment {
+        DOCKER_ID    = "maxjokar2020"      // Your Docker Hub ID
+        DOCKER_IMAGE = "datascientestapi"
+        DOCKER_TAG   = "v.${BUILD_ID}.0"
+    }
+
     agent any
+
     stages {
+
         stage('Check Environment') {
             steps {
                 echo "Jenkins pipeline is running."
@@ -14,13 +18,28 @@ pipeline {
                 sh 'env'
             }
         }
+
         stage('List Workspace') {
             steps {
                 sh 'ls -la'
             }
         }
+
+        stage('Docker Build') {
+            steps {
+                script {
+                    sh '''
+                        docker rm -f jenkins || true
+                        docker build -t $DOCKER_ID/$DOCKER_IMAGE:$DOCKER_TAG .
+                        sleep 6
+                    '''
+                }
+            }
+        }
+
     }
 }
+
 
 //2. another example of a Jenkins pipeline
 
