@@ -103,31 +103,35 @@ pipeline {
 
         stage('Deploy to Dev') {
             environment {
-                KUBECONFIG = credentials("config")  // Jenkins credential with kubeconfig file
+                KUBECONFIG = credentials('config')  // Jenkins credential holding kubeconfig
             }
             steps {
                 script {
                     sh '''
-                        # Clean and recreate kube config directory
-                        rm -rf ~/.kube && mkdir -p ~/.kube
-
-                        # Write the kubeconfig contents to default location
+                        mkdir -p ~/.kube
                         cat $KUBECONFIG > ~/.kube/config
 
-                        # Copy Helm values.yaml from charts/ to working file
-                        cp charts/values.yaml values.yml
+                        # Verify cluster connectivity
+                        kubectl get nodes
 
-                        # Substitute the image tag in values.yml with current DOCKER_TAG
-                        sed -i "s+tag.*+tag: ${DOCKER_TAG}+g" values.yml
-
-                        # Create the 'dev' namespace if it doesn't exist (idempotent)
+                        # Your deployment commands here, e.g.:
                         kubectl create namespace dev --dry-run=client -o yaml | kubectl apply -f -
-
-                        # Deploy or upgrade Helm chart in namespace 'dev' with updated values
-                        helm upgrade --install app charts --values=values.yml --namespace dev
+                        helm upgrade --install your-app charts/ --namespace dev
                     '''
                 }
             }
         }
+
+        stage('Cleanup') {
+            steps {
+                script {
+                    sh '''
+                        docker rm -f jenkins || true
+                        docker rmi $DOCKER_ID/$DOCKER_IMAGE:$DOCKER_TAG || true
+                    '''
+                }
+            }
+        }
+
     }
 }
