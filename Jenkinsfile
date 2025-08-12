@@ -108,25 +108,18 @@ pipeline {
             steps {
                 script {
                     sh '''
-                        // mkdir -p ~/.kube
-                        // cat $KUBECONFIG > ~/.kube/config
-                        // chmod 600 ~/.kube/config
-                        // kubectl get nodes
-                        
-                        // # Verify kubectl connectivity
-                        // kubectl get nodes
-                        
-                        // # Deploy commands
-                        // # kubectl create namespace dev --dry-run=client -o yaml | kubectl apply -f -
-                        // # helm upgrade --install app charts/ --namespace dev
-                                    sed -i 's|127.0.0.1|172.30.189.142|g' $KUBECONFIG
+                            # Replace localhost with actual API server IP inside the kubeconfig for this run
+                            sed -i 's|127.0.0.1|172.30.189.142|g' $KUBECONFIG
 
-                        # Copy to default kubectl location
-                        mkdir -p ~/.kube
-                        cat $KUBECONFIG > ~/.kube/config
-                        chmod 600 ~/.kube/config
-
-                        kubectl get nodes
+                            mkdir -p ~/.kube
+                            cat $KUBECONFIG > ~/.kube/config
+                            chmod 600 ~/.kube/config
+                            
+                            kubectl get nodes
+                            
+                            # Your deployment commands here
+                            # kubectl create namespace dev --dry-run=client -o yaml | kubectl apply -f -
+                            # helm upgrade --install app charts/ --namespace dev
                     '''
                 }
             }
