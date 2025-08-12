@@ -112,7 +112,7 @@ pipeline {
                             cat $KUBECONFIG > .kube/config 
                             cp charts/values.yaml values.yml 
                             sed -i "s+tag.*+tag: ${DOCKER_TAG}+g" values.yml 
-                            //kubectl create namespace dev --dry-run=client -o yaml | kubectl  apply -f 
+                            # kubectl create namespace dev --dry-run=client -o yaml | kubectl  apply -f 
                             helm upgrade --install app charts --values=values.yml namespace dev 
  
                     '''
