@@ -110,13 +110,13 @@ pipeline {
                     sh '''
                         mkdir -p ~/.kube
                         cat $KUBECONFIG > ~/.kube/config
-
-                        # Verify cluster connectivity
+                        
+                        # Verify kubectl connectivity
                         kubectl get nodes
-
-                        # Your deployment commands here, e.g.:
+                        
+                        # Deploy commands
                         kubectl create namespace dev --dry-run=client -o yaml | kubectl apply -f -
-                        helm upgrade --install your-app fastapi-project/ --namespace dev
+                        helm upgrade --install app charts/ --namespace dev
                     '''
                 }
             }
