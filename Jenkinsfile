@@ -1,8 +1,8 @@
 // A simple Jenkins pipeline example
 pipeline {
     environment {
-        DOCKER_ID    = "maxjokar2020"          // Your Docker Hub ID
-        DOCKER_IMAGE = "datascientestapi-new"  // Your Docker image name
+        DOCKER_ID    = "maxjokar2020"         // Your Docker Hub ID
+        DOCKER_IMAGE = "datascientestapi-new" // Your Docker image name
         DOCKER_TAG   = "v.${BUILD_ID}.0"
     }
 
@@ -37,7 +37,7 @@ pipeline {
             }
         }
 
-        // Optional login stage — uncomment if you need Docker Hub push
+        // Optional login stage — uncomment if you need Docker Hub push before running
         /*
         stage('Docker Login') {
             steps {
@@ -83,25 +83,23 @@ pipeline {
                 } 
             } 
         } 
-        
-        stage('Deploy to Dev') { 
-            environment { 
-                KUBECONFIG = credentials("config") 
-            } 
-            steps { 
-                script { 
-                        sh '''
-                        rm -rf /var/lib/jenkins/.kube
-                        mkdir -p /var/lib/jenkins/.kube
-                        cat $KUBECONFIG > /var/lib/jenkins/.kube/config
-                        cp charts/values.yaml values.yml
-                        sed -i "s+tag.*+tag: ${DOCKER_TAG}+g" values.yml
-                        kubectl create namespace dev --dry-run=client -o yaml | kubectl apply -f -
-                        helm upgrade --install app charts --values=values.yml --namespace dev
-                        '''
 
-                } 
-            } 
+        stage('Debug Kubeconfig') {
+            steps {
+                sh '''
+                    echo "📌 API Server address in kubeconfig:"
+                    grep server /var/lib/jenkins/.kube/config
+
+                    echo ""
+                    echo "📌 First line of Certificate Authority data:"
+                    grep certificate-authority-data /var/lib/jenkins/.kube/config | head -1
+
+                    echo ""
+                    echo "📌 Entire kubeconfig content (for verification):"
+                    cat /var/lib/jenkins/.kube/config
+                '''
+            }
         }
+
     }
 }
