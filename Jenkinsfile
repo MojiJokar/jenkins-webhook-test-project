@@ -90,21 +90,16 @@ pipeline {
             } 
             steps { 
                 script { 
-                    sh ''' 
-                            rm -rf ~/.kube && mkdir ~/.kube
-                            # Write the entire kubeconfig file from Jenkins credential
-                            cat $KUBECONFIG > ~/.kube/config
+                        sh '''
+                        rm -rf /var/lib/jenkins/.kube
+                        mkdir -p /var/lib/jenkins/.kube
+                        cat $KUBECONFIG > /var/lib/jenkins/.kube/config
+                        cp charts/values.yaml values.yml
+                        sed -i "s+tag.*+tag: ${DOCKER_TAG}+g" values.yml
+                        kubectl create namespace dev --dry-run=client -o yaml | kubectl apply -f -
+                        helm upgrade --install app charts --values=values.yml --namespace dev
+                        '''
 
-                            # Optionally extract CA cert for explicit TLS usage (if needed)
-                            kubectl config view --raw -o jsonpath='{.clusters[0].cluster.certificate-authority-data}' | base64 --decode > ~/.kube/ca.crt
-
-                            cp charts/values.yaml values.yml
-                            sed -i "s+tag.*+tag: ${DOCKER_TAG}+g" values.yml
-
-                            kubectl create namespace dev --dry-run=client -o yaml | kubectl apply -f -
-                            helm upgrade --install app charts --values=values.yml --namespace dev
-            
-                    ''' 
                 } 
             } 
         }
