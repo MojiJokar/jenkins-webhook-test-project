@@ -108,18 +108,15 @@ pipeline {
             steps {
                 script {
                     sh '''
-                            # Replace localhost with actual API server IP inside the kubeconfig for this run
-                            sed -i 's|127.0.0.1|172.30.189.142|g' $KUBECONFIG
-
-                            mkdir -p ~/.kube
-                            cat $KUBECONFIG > ~/.kube/config
-                            chmod 600 ~/.kube/config
-                            
-                            kubectl get nodes
-                            
-                            # Your deployment commands here
-                            # kubectl create namespace dev --dry-run=client -o yaml | kubectl apply -f -
-                            # helm upgrade --install app charts/ --namespace dev
+                              rm -Rf .kube && mkdir .kube 
+                            cat $KUBECONFIG > .kube/config 
+                            cp fastapi/values.yaml values.yml 
+                            sed -i "s+tag.*+tag: ${DOCKER_TAG}+g" values.yml 
+                            kubectl create namespace dev --dry-run=client -o yaml | kubectl 
+                    apply -f - 
+                            helm upgrade --install app fastapi --values=values.yml -
+                    namespace dev 
+ 
                     '''
                 }
             }
