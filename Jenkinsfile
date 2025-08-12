@@ -3,7 +3,7 @@
 pipeline {
     environment {
         DOCKER_ID    = "maxjokar2020"      // Your Docker Hub ID
-        DOCKER_IMAGE = "datascientestapi"
+        DOCKER_IMAGE = "datascientestapi-new" // Your Docker image name
         DOCKER_TAG   = "v.${BUILD_ID}.0"
     }
 
