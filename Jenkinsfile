@@ -116,7 +116,7 @@ pipeline {
 
                         # Your deployment commands here, e.g.:
                         kubectl create namespace dev --dry-run=client -o yaml | kubectl apply -f -
-                        helm upgrade --install your-app charts/ --namespace dev
+                        helm upgrade --install your-app fastapi-project/ --namespace dev
                     '''
                 }
             }
