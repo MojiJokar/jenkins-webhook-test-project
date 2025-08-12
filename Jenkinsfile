@@ -108,30 +108,40 @@ pipeline {
             steps {
                 script {
                     sh '''
+                        // mkdir -p ~/.kube
+                        // cat $KUBECONFIG > ~/.kube/config
+                        // chmod 600 ~/.kube/config
+                        // kubectl get nodes
+                        
+                        // # Verify kubectl connectivity
+                        // kubectl get nodes
+                        
+                        // # Deploy commands
+                        // # kubectl create namespace dev --dry-run=client -o yaml | kubectl apply -f -
+                        // # helm upgrade --install app charts/ --namespace dev
+                                    sed -i 's|127.0.0.1|172.30.189.142|g' $KUBECONFIG
+
+                        # Copy to default kubectl location
                         mkdir -p ~/.kube
                         cat $KUBECONFIG > ~/.kube/config
-                        
-                        # Verify kubectl connectivity
+                        chmod 600 ~/.kube/config
+
                         kubectl get nodes
-                        
-                        # Deploy commands
-                        kubectl create namespace dev --dry-run=client -o yaml | kubectl apply -f -
-                        helm upgrade --install app charts/ --namespace dev
                     '''
                 }
             }
         }
 
-        stage('Cleanup') {
-            steps {
-                script {
-                    sh '''
-                        docker rm -f jenkins || true
-                        docker rmi $DOCKER_ID/$DOCKER_IMAGE:$DOCKER_TAG || true
-                    '''
-                }
-            }
-        }
+        // stage('Cleanup') {
+        //     steps {
+        //         script {
+        //             sh '''
+        //                 docker rm -f jenkins || true
+        //                 docker rmi $DOCKER_ID/$DOCKER_IMAGE:$DOCKER_TAG || true
+        //             '''
+        //         }
+        //     }
+        // }
 
     }
 }
