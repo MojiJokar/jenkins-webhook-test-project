@@ -114,8 +114,8 @@ pipeline {
                         # Write the kubeconfig contents to default location
                         cat $KUBECONFIG > ~/.kube/config
 
-                        # Copy Helm values.yaml for modification
-                        cp fastapi/values.yaml values.yml
+                        # Copy Helm values.yaml from charts/ to working file
+                        cp charts/values.yaml values.yml
 
                         # Substitute the image tag in values.yml with current DOCKER_TAG
                         sed -i "s+tag.*+tag: ${DOCKER_TAG}+g" values.yml
@@ -123,8 +123,8 @@ pipeline {
                         # Create the 'dev' namespace if it doesn't exist (idempotent)
                         kubectl create namespace dev --dry-run=client -o yaml | kubectl apply -f -
 
-                        # Deploy or upgrade Helm chart 'app' in namespace 'dev' with updated values
-                        helm upgrade --install app fastapi --values=values.yml --namespace dev
+                        # Deploy or upgrade Helm chart in namespace 'dev' with updated values
+                        helm upgrade --install app charts --values=values.yml --namespace dev
                     '''
                 }
             }
