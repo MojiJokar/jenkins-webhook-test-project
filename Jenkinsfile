@@ -108,26 +108,19 @@ pipeline {
             steps {
                 script {
                     sh '''
-                        rm -Rf .kube && mkdir .kube
+                            rm -Rf .kube && mkdir .kube
+                            cat $KUBECONFIG > .kube/config
+                            sed -i 's|https://127.0.0.1:6443|https://172.30.189.142:6443|g' .kube/config
 
-                        # Write kubeconfig from Jenkins credential
-                        cat $KUBECONFIG > .kube/config
+                            # Validate connectivity:
+                            kubectl --kubeconfig=.kube/config get nodes
 
-                        # Replace localhost with cluster IP reachable from Jenkins
-                        sed -i 's|https://127.0.0.1:6443|https://172.30.189.142:6443|g' .kube/config
+                            # Create namespace if missing:
+                            kubectl --kubeconfig=.kube/config create namespace dev --dry-run=client -o yaml | kubectl --kubeconfig=.kube/config apply -f -
 
-                        # Verify kubctl connectivity (fail fast if issue)
-                        kubectl --kubeconfig=.kube/config get nodes
+                            # Deploy Helm chart explicitly using kubeconfig:
+                            helm upgrade --install app charts --values=values.yml --namespace dev --kubeconfig=.kube/config
 
-                        # Prepare Helm values file and optionally substitute tags
-                        cp charts/values.yaml values.yml
-                        # sed -i "s+tag.*+tag: ${DOCKER_TAG}+g" values.yml
-
-                        # Create Kubernetes namespace idempotently
-                        kubectl --kubeconfig=.kube/config create namespace dev --dry-run=client -o yaml | kubectl --kubeconfig=.kube/config apply -f -
-
-                        # Deploy Helm chart from local 'charts' directory using explicit kubeconfig
-                        helm upgrade --install app charts --values=values.yml --namespace dev --kubeconfig=.kube/config
 
                     '''
                 }
