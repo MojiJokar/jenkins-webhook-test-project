@@ -110,12 +110,20 @@ pipeline {
                     sh '''
                 rm -Rf .kube && mkdir .kube
                 cat $KUBECONFIG > .kube/config
+
+                # Replace localhost with cluster IP if needed
                 sed -i 's|https://127.0.0.1:6443|https://172.30.189.142:6443|g' .kube/config
 
-                kubectl --kubeconfig=.kube/config get nodes
-                kubectl --kubeconfig=.kube/config create namespace dev --dry-run=client -o yaml | \
-                    kubectl --kubeconfig=.kube/config apply -f -
+                # Verify kubeconfig content loaded in pipeline and current context
+                kubectl --kubeconfig=.kube/config config view --minify
+                kubectl --kubeconfig=.kube/config config current-context
 
+                # Now test cluster connectivity
+                kubectl --kubeconfig=.kube/config get nodes
+
+                # Continue with deployment commands
+                kubectl --kubeconfig=.kube/config create namespace dev --dry-run=client -o yaml | kubectl --kubeconfig=.kube/config apply -f -
+                
                 cp charts/values.yaml values.yml
                 # sed -i "s+tag.*+tag: ${DOCKER_TAG}+g" values.yml
 
