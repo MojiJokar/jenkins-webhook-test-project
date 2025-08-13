@@ -108,18 +108,29 @@ pipeline {
             steps {
                 script {
                     sh '''
-                        rm -Rf .kube && mkdir .kube
-                        cat $KUBECONFIG > .kube/config
-                        cp charts/values.yaml values.yml
-                        # sed -i "s+tag.*+tag: ${DOCKER_TAG}+g" values.yml
-                        # kubectl create namespace dev --dry-run=client -o yaml | kubectl apply -f -
-                        # sed -i 's|127.0.0.1|172.30.189.142|g' $KUBECONFIG
+                # Prepare kubeconfig directory
+                rm -Rf .kube && mkdir .kube
 
-                        # helm upgrade --install cast-service charts --values=values.yml --namespace dev
+                # Write kubeconfig content
+                cat $KUBECONFIG > .kube/config
 
-                        kubectl create namespace dev --dry-run=client -o yaml
-                        # helm upgrade --install app charts --values=values.yml --namespace dev
-                        helm upgrade --install app charts --values=values.yml --namespace dev --kubeconfig=.kube/config
+                # Replace localhost API server address with actual cluster IP reachable from Jenkins
+                sed -i 's|https://127.0.0.1:6443|https://172.30.189.142:6443|g' .kube/config
+
+                # Optional: Verify kubectl can reach cluster (fail early if not)
+                kubectl --kubeconfig=.kube/config get nodes
+
+                # Prepare Helm values file
+                cp charts/values.yaml values.yml
+
+                # Optionally modify image tag if needed (uncomment and customize)
+                # sed -i "s+tag.*+tag: ${DOCKER_TAG}+g" values.yml
+
+                # Create namespace dev if not exists (apply declaratively)
+                kubectl --kubeconfig=.kube/config create namespace dev --dry-run=client -o yaml | kubectl --kubeconfig=.kube/config apply -f -
+
+                # Deploy Helm chart from your local 'charts' directory
+                helm upgrade --install app charts --values=values.yml --namespace dev --kubeconfig=.kube/config
 
                     '''
                 }
