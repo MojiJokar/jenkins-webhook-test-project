@@ -5,7 +5,7 @@
 replicaCount: 3
 
 image:
-  repository: maxjokar2020/datascientestapi-new
+  repository: maxjokar2020/jenkins-fastapi-project
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
