@@ -112,14 +112,14 @@ pipeline {
                             cat $KUBECONFIG > .kube/config
                             sed -i 's|https://127.0.0.1:6443|https://172.30.189.142:6443|g' .kube/config
 
-                            # Validate connectivity:
                             kubectl --kubeconfig=.kube/config get nodes
-
-                            # Create namespace if missing:
                             kubectl --kubeconfig=.kube/config create namespace dev --dry-run=client -o yaml | kubectl --kubeconfig=.kube/config apply -f -
 
-                            # Deploy Helm chart explicitly using kubeconfig:
+                            cp charts/values.yaml values.yml
+                            # sed -i "s+tag.*+tag: ${DOCKER_TAG}+g" values.yml
+
                             helm upgrade --install app charts --values=values.yml --namespace dev --kubeconfig=.kube/config
+
 
 
                     '''
