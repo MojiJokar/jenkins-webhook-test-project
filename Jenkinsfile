@@ -118,7 +118,9 @@ pipeline {
                         # helm upgrade --install cast-service charts --values=values.yml --namespace dev
 
                         kubectl create namespace dev --dry-run=client -o yaml
-                        helm upgrade --install app fastapi --values=values.yml --namespace dev
+                        # helm upgrade --install app charts --values=values.yml --namespace dev
+                        helm upgrade --install app charts --values=values.yml --namespace dev --kubeconfig=.kube/config
+
                     '''
                 }
             }
