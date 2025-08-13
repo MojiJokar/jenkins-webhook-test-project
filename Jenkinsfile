@@ -108,29 +108,26 @@ pipeline {
             steps {
                 script {
                     sh '''
-                # Prepare kubeconfig directory
-                rm -Rf .kube && mkdir .kube
+                        rm -Rf .kube && mkdir .kube
 
-                # Write kubeconfig content
-                cat $KUBECONFIG > .kube/config
+                        # Write kubeconfig from Jenkins credential
+                        cat $KUBECONFIG > .kube/config
 
-                # Replace localhost API server address with actual cluster IP reachable from Jenkins
-                sed -i 's|https://127.0.0.1:6443|https://172.30.189.142:6443|g' .kube/config
+                        # Replace localhost with cluster IP reachable from Jenkins
+                        sed -i 's|https://127.0.0.1:6443|https://172.30.189.142:6443|g' .kube/config
 
-                # Optional: Verify kubectl can reach cluster (fail early if not)
-                kubectl --kubeconfig=.kube/config get nodes
+                        # Verify kubctl connectivity (fail fast if issue)
+                        kubectl --kubeconfig=.kube/config get nodes
 
-                # Prepare Helm values file
-                cp charts/values.yaml values.yml
+                        # Prepare Helm values file and optionally substitute tags
+                        cp charts/values.yaml values.yml
+                        # sed -i "s+tag.*+tag: ${DOCKER_TAG}+g" values.yml
 
-                # Optionally modify image tag if needed (uncomment and customize)
-                # sed -i "s+tag.*+tag: ${DOCKER_TAG}+g" values.yml
+                        # Create Kubernetes namespace idempotently
+                        kubectl --kubeconfig=.kube/config create namespace dev --dry-run=client -o yaml | kubectl --kubeconfig=.kube/config apply -f -
 
-                # Create namespace dev if not exists (apply declaratively)
-                kubectl --kubeconfig=.kube/config create namespace dev --dry-run=client -o yaml | kubectl --kubeconfig=.kube/config apply -f -
-
-                # Deploy Helm chart from your local 'charts' directory
-                helm upgrade --install app charts --values=values.yml --namespace dev --kubeconfig=.kube/config
+                        # Deploy Helm chart from local 'charts' directory using explicit kubeconfig
+                        helm upgrade --install app charts --values=values.yml --namespace dev --kubeconfig=.kube/config
 
                     '''
                 }
